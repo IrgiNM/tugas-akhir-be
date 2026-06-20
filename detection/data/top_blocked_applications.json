@@ -1,0 +1,36 @@
+{
+    "status": "success",
+    "view": "top_blocked_applications",
+    "data": [
+      {
+        "bytes": "1048576",
+        "connections": "35",
+        "detail": "Social Media",
+        "name": "TikTok"
+      },
+      {
+        "bytes": "2048576",
+        "connections": "63",
+        "detail": "Streaming",
+        "name": "YouTube"
+      },
+      {
+        "bytes": "1548576",
+        "connections": "42",
+        "detail": "Social Media",
+        "name": "Instagram"
+      },
+      {
+        "bytes": "854576",
+        "connections": "14",
+        "detail": "Communication",
+        "name": "Discord"
+      },
+      {
+        "bytes": "654576",
+        "connections": "27",
+        "detail": "Gaming",
+        "name": "Steam"
+      }
+    ]
+  }

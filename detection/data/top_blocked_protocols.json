@@ -1,0 +1,36 @@
+{
+    "status": "success",
+    "view": "top_blocked_protocols",
+    "data": [
+      {
+        "bytes": "5048576",
+        "connections": "53",
+        "detail": "",
+        "name": "HTTPS"
+      },
+      {
+        "bytes": "3048576",
+        "connections": "24",
+        "detail": "",
+        "name": "HTTP"
+      },
+      {
+        "bytes": "2048576",
+        "connections": "11",
+        "detail": "",
+        "name": "DNS"
+      },
+      {
+        "bytes": "1548576",
+        "connections": "45",
+        "detail": "",
+        "name": "FTP"
+      },
+      {
+        "bytes": "854576",
+        "connections": "29",
+        "detail": "",
+        "name": "SSH"
+      }
+    ]
+  }

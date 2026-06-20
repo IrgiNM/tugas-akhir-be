@@ -1,0 +1,36 @@
+{
+    "status": "success",
+    "view": "top_blocked_attacks",
+    "data": [
+      {
+        "bytes": "0",
+        "connections": "45",
+        "detail": "Critical",
+        "name": "SQL Injection"
+      },
+      {
+        "bytes": "0",
+        "connections": "21",
+        "detail": "High",
+        "name": "Cross Site Scripting"
+      },
+      {
+        "bytes": "0",
+        "connections": "34",
+        "detail": "Medium",
+        "name": "Port Scanning"
+      },
+      {
+        "bytes": "0",
+        "connections": "72",
+        "detail": "Critical",
+        "name": "Remote Code Execution"
+      },
+      {
+        "bytes": "0",
+        "connections": "43",
+        "detail": "Low",
+        "name": "Brute Force Login"
+      }
+    ]
+  }
