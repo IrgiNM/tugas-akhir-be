@@ -25,6 +25,7 @@ import os
 import subprocess
 import tempfile
 from pathlib import Path
+import csv
 
 from datetime import datetime, time, timedelta
 from django.utils.dateparse import parse_date
@@ -33,6 +34,9 @@ from rest_framework.pagination import PageNumberPagination
 from .services.watchguard_logs import fetch_logs
 from .services.watchguard_get_syslog import fetch_logs_syslogs
 from .services.syslog_dataset_service import export_syslog_dataset_to_csv
+from .utils.vps_storage import upload_file_to_vps
+
+
 
 
 
@@ -469,6 +473,47 @@ class DownloadSyslogDatasetView(APIView):
             return Response({
                 "message": "Data dataset tidak ditemukan di database"
             }, status=status.HTTP_404_NOT_FOUND)
+        
+class TestVpsUploadView(APIView):
+    def get(self, request):
+        try:
+            file_name = f"test_railway_upload_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+
+            with tempfile.NamedTemporaryFile(
+                mode="w",
+                suffix=".csv",
+                delete=False,
+                newline="",
+                encoding="utf-8",
+            ) as temp_file:
+                writer = csv.writer(temp_file)
+                writer.writerow(["status", "message"])
+                writer.writerow(["success", "Upload dari Django Railway ke VPS berhasil"])
+
+                temp_file_path = temp_file.name
+
+            file_url = upload_file_to_vps(temp_file_path, file_name)
+
+            if os.path.exists(temp_file_path):
+                os.remove(temp_file_path)
+
+            return Response(
+                {
+                    "message": "Upload ke VPS berhasil",
+                    "file_name": file_name,
+                    "file_url": file_url,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as e:
+            return Response(
+                {
+                    "message": "Upload ke VPS gagal",
+                    "error": str(e),
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 # def extract_date_from_filename(filename):

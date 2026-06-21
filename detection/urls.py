@@ -51,4 +51,6 @@ urlpatterns = [
         name="download-syslog-dataset",
     ),
 
+    path("test-vps-upload/", TestVpsUploadView.as_view(), name="test-vps-upload"),
+
 ]
