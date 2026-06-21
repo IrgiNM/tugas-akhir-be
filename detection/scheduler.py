@@ -3,6 +3,7 @@ import requests
 
 from .services.watchguard_logs import fetch_logs
 from .services.watchguard_get_syslog import fetch_logs_syslogs
+from .services.syslog_dataset_service import export_yesterday_syslog_dataset
 
 
 BASE_URL = "http://127.0.0.1:8000"
@@ -92,6 +93,20 @@ def start():
         hour=0,
         minute=10,
         id="fetch_syslog_logs",
+        replace_existing=True,
+    )
+
+    # =========================
+    # EXPORT DATASET SYSLOG CSV
+    # jalan sehari sekali jam 00:20
+    # setelah fetch syslog selesai
+    # =========================
+    scheduler.add_job(
+        export_yesterday_syslog_dataset,
+        "cron",
+        hour=0,
+        minute=20,
+        id="export_syslog_dataset_csv",
         replace_existing=True,
     )
 

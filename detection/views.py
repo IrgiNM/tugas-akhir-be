@@ -22,13 +22,17 @@ import io
 import ipaddress
 import json
 import os
-from datetime import datetime, timedelta
 import subprocess
 import tempfile
+from pathlib import Path
+
+from datetime import datetime, time, timedelta
+from django.utils.dateparse import parse_date
 
 from rest_framework.pagination import PageNumberPagination
 from .services.watchguard_logs import fetch_logs
 from .services.watchguard_get_syslog import fetch_logs_syslogs
+from .services.syslog_dataset_service import export_syslog_dataset_to_csv
 
 
 
@@ -317,7 +321,18 @@ class SyslogLogListView(APIView):
             logs = logs.filter(msg_id=msg_id)
 
         if date:
-            logs = logs.filter(timestamp__date=date)
+            parsed_date = parse_date(date)
+
+            if parsed_date:
+                start_datetime = timezone.make_aware(
+                    datetime.combine(parsed_date, time.min)
+                )
+                end_datetime = start_datetime + timedelta(days=1)
+
+                logs = logs.filter(
+                    timestamp__gte=start_datetime,
+                    timestamp__lt=end_datetime,
+                )
 
         if month:
             logs = logs.filter(timestamp__month=month)
@@ -350,8 +365,13 @@ class SyslogLogDetailView(APIView):
 
 class FetchSyslogLogView(APIView):
     def post(self, request):
+        date = request.query_params.get("date")
         date_from = request.query_params.get("from")
         date_to = request.query_params.get("to")
+
+        if date:
+            date_from = date
+            date_to = date
 
         result = fetch_logs_syslogs(
             date_from=date_from,
@@ -374,6 +394,90 @@ class FetchSyslogLogView(APIView):
             },
             status=status.HTTP_200_OK
         )
+
+
+# DATASET
+
+class ListSyslogDatasetView(APIView):
+    def get(self, request):
+        datasets = SyslogDataset.objects.all().order_by(
+            "-dataset_date",
+            "-updated_at"
+        )
+
+        serializer = SyslogDatasetSerializer(
+            datasets,
+            many=True,
+            context={"request": request}
+        )
+
+        return Response({
+            "message": "Daftar dataset berhasil diambil",
+            "total": datasets.count(),
+            "data": serializer.data,
+        }, status=status.HTTP_200_OK)
+
+
+class ExportSyslogDatasetView(APIView):
+    def get(self, request):
+        try:
+            target_date = request.query_params.get("date")
+
+            result = export_syslog_dataset_to_csv(
+                target_date,
+                generated_by="manual"
+            )
+
+            dataset = SyslogDataset.objects.get(id=result["id"])
+
+            serializer = SyslogDatasetSerializer(
+                dataset,
+                context={"request": request}
+            )
+
+            return Response({
+                "message": "Dataset syslog berhasil dibuat",
+                **serializer.data,
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({
+                "message": "Gagal membuat dataset syslog",
+                "error": str(e),
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class DownloadSyslogDatasetView(APIView):
+    def get(self, request, filename):
+        try:
+            dataset = SyslogDataset.objects.get(file_name=filename)
+            file_path = Path(dataset.file_path)
+
+            if not file_path.exists():
+                return Response({
+                    "message": "File dataset tidak ditemukan di storage"
+                }, status=status.HTTP_404_NOT_FOUND)
+
+            return FileResponse(
+                open(file_path, "rb"),
+                as_attachment=True,
+                filename=dataset.file_name,
+                content_type="text/csv",
+            )
+
+        except SyslogDataset.DoesNotExist:
+            return Response({
+                "message": "Data dataset tidak ditemukan di database"
+            }, status=status.HTTP_404_NOT_FOUND)
+
+
+# def extract_date_from_filename(filename):
+#     try:
+#         # contoh: syslog_dataset_2026-06-20.csv
+#         name = filename.replace(".csv", "")
+#         return name.split("syslog_dataset_")[-1]
+#     except Exception:
+#         return "-"
 
 
 

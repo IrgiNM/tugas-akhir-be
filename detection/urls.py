@@ -35,4 +35,20 @@ urlpatterns = [
     path("syslog-logs/<int:pk>/", SyslogLogDetailView.as_view()),
     path("syslog-logs/fetch/", FetchSyslogLogView.as_view()),
 
+    path(
+        "syslog-dataset/list/",
+        ListSyslogDatasetView.as_view(),
+        name="list-syslog-dataset",
+    ),
+    path(
+        "syslog-dataset/export/",
+        ExportSyslogDatasetView.as_view(),
+        name="export-syslog-dataset",
+    ),
+    path(
+        "syslog-dataset/download/<str:filename>/",
+        DownloadSyslogDatasetView.as_view(),
+        name="download-syslog-dataset",
+    ),
+
 ]

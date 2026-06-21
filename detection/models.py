@@ -118,7 +118,23 @@ class SyslogLog(models.Model):
         return f"{self.timestamp} - {self.log_type} - {self.action}"
 
 
+# DATASET
 
+class SyslogDataset(models.Model):
+    dataset_date = models.DateField(unique=True)
+    file_name = models.CharField(max_length=255, unique=True)
+    file_path = models.TextField()
+    total_rows = models.IntegerField(default=0)
+    size_bytes = models.BigIntegerField(default=0)
+    size_mb = models.FloatField(default=0)
+    storage_type = models.CharField(max_length=50, default="local")
+    generated_by = models.CharField(max_length=50, default="manual")
+    status = models.CharField(max_length=50, default="success")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.file_name} - {self.dataset_date}"    
 
 
 

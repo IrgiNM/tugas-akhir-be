@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from .models import *
+from pathlib import Path
+from django.urls import reverse
 
 
 class TopReportSerializer(serializers.ModelSerializer):
@@ -31,8 +33,7 @@ class TopReportSerializer(serializers.ModelSerializer):
             size /= 1024
         return f"{size:.2f} PB"
     
-
-    
+   
 class SyslogLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = SyslogLog
@@ -65,3 +66,48 @@ class SyslogLogListSerializer(serializers.ModelSerializer):
             "extra_data",
             "created_at",
         ]
+
+
+class SyslogDatasetSerializer(serializers.ModelSerializer):
+    date = serializers.DateField(source="dataset_date", read_only=True)
+    download_url = serializers.SerializerMethodField()
+    file_exists = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SyslogDataset
+        fields = [
+            "id",
+            "file_name",
+            "file_path",
+            "date",
+            "total_rows",
+            "size_bytes",
+            "size_mb",
+            "storage_type",
+            "generated_by",
+            "status",
+            "file_exists",
+            "download_url",
+            "created_at",
+            "updated_at",
+        ]
+
+    def get_download_url(self, obj):
+        request = self.context.get("request")
+
+        if not request:
+            return None
+
+        url = reverse(
+            "download-syslog-dataset",
+            kwargs={"filename": obj.file_name}
+        )
+
+        return request.build_absolute_uri(url)
+
+    def get_file_exists(self, obj):
+        return Path(obj.file_path).exists()
+
+
+
+

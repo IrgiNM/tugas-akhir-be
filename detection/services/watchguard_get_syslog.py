@@ -1,4 +1,6 @@
 import requests
+from datetime import timedelta
+
 from django.conf import settings
 from django.utils import timezone
 
@@ -34,10 +36,10 @@ def fetch_logs_syslogs(date_from=None, date_to=None):
             "message": "WATCHGUARD_BEARER_TOKEN belum diatur",
         }
 
-    today = timezone.localdate()
+    yesterday = timezone.localdate() - timedelta(days=1)
 
-    date_from = date_from or today.isoformat()
-    date_to = date_to or today.isoformat()
+    date_from = date_from or yesterday.isoformat()
+    date_to = date_to or yesterday.isoformat()
 
     headers = {
         "Authorization": f"Bearer {token}",
