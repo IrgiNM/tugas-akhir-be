@@ -50,7 +50,11 @@ def upload_file_to_vps(local_file_path, file_name):
             port=settings.VPS_PORT,
             username=settings.VPS_USER,
             pkey=private_key,
-            timeout=30,
+            timeout=8,
+            banner_timeout=8,
+            auth_timeout=8,
+            look_for_keys=False,
+            allow_agent=False,
         )
 
         remote_dir = settings.VPS_REMOTE_DIR.rstrip("/")
