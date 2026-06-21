@@ -421,7 +421,6 @@ class ListSyslogDatasetView(APIView):
             "data": serializer.data,
         }, status=status.HTTP_200_OK)
 
-
 class ExportSyslogDatasetView(APIView):
     def get(self, request):
         try:
@@ -449,7 +448,6 @@ class ExportSyslogDatasetView(APIView):
                 "message": "Gagal membuat dataset syslog",
                 "error": str(e),
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 class DownloadSyslogDatasetView(APIView):
     def get(self, request, filename):
@@ -514,6 +512,94 @@ class TestVpsUploadView(APIView):
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+
+# API DATASET
+
+def check_dataset_api_key(request):
+    api_key = request.headers.get("X-API-Key")
+
+    if not settings.DATASET_API_KEY:
+        return False
+
+    return api_key == settings.DATASET_API_KEY
+
+
+def dataset_response(dataset):
+    return {
+        "id": dataset.id,
+        "date": dataset.dataset_date.strftime("%Y-%m-%d"),
+        "file_name": dataset.file_name,
+        "file_url": dataset.file_path,
+        "total_rows": dataset.total_rows,
+        "size_bytes": dataset.size_bytes,
+        "size_mb": dataset.size_mb,
+        "storage_type": dataset.storage_type,
+        "generated_by": dataset.generated_by,
+        "status": dataset.status,
+        "created_at": dataset.created_at,
+        "updated_at": dataset.updated_at,
+    }
+
+
+class ExternalDatasetListView(APIView):
+    authentication_classes = []
+    permission_classes = []
+
+    def get(self, request):
+        if not check_dataset_api_key(request):
+            return Response(
+                {
+                    "message": "API key tidak valid."
+                },
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        date_param = request.query_params.get("date")
+        latest = request.query_params.get("latest")
+
+        queryset = SyslogDataset.objects.filter(
+            status="success"
+        ).order_by("-dataset_date", "-updated_at")
+
+        if date_param:
+            dataset = queryset.filter(dataset_date=date_param).first()
+
+            if not dataset:
+                return Response(
+                    {
+                        "message": "Dataset tidak ditemukan.",
+                        "date": date_param,
+                    },
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            return Response(dataset_response(dataset), status=status.HTTP_200_OK)
+
+        if latest == "true":
+            dataset = queryset.first()
+
+            if not dataset:
+                return Response(
+                    {
+                        "message": "Belum ada dataset."
+                    },
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            return Response(dataset_response(dataset), status=status.HTTP_200_OK)
+
+        datasets = queryset[:30]
+
+        return Response(
+            {
+                "message": "Daftar dataset berhasil diambil.",
+                "total": len(datasets),
+                "data": [dataset_response(dataset) for dataset in datasets],
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 # def extract_date_from_filename(filename):

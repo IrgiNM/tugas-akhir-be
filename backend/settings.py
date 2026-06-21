@@ -29,6 +29,8 @@ VPS_PRIVATE_KEY = os.getenv("VPS_PRIVATE_KEY")
 VPS_REMOTE_DIR = os.getenv("VPS_REMOTE_DIR", "/var/www/syslog-datasets")
 VPS_BASE_URL = os.getenv("VPS_BASE_URL")
 
+DATASET_API_KEY = os.getenv("DATASET_API_KEY")
+
 
 
 # Quick-start development settings - unsuitable for production

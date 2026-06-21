@@ -53,4 +53,6 @@ urlpatterns = [
 
     path("test-vps-upload/", TestVpsUploadView.as_view(), name="test-vps-upload"),
 
+    path("external/datasets/", ExternalDatasetListView.as_view(), name="external-datasets"),
+
 ]
