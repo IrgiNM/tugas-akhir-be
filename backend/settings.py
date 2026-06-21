@@ -23,7 +23,7 @@ load_dotenv(BASE_DIR / ".env")
 WATCHGUARD_BEARER_TOKEN = os.getenv("WATCHGUARD_BEARER_TOKEN")
 
 VPS_HOST = os.getenv("VPS_HOST")
-VPS_PORT = int(os.getenv("VPS_PORT", "22"))
+VPS_PORT = int(os.getenv("VPS_PORT") or 22)
 VPS_USER = os.getenv("VPS_USER")
 VPS_PRIVATE_KEY = os.getenv("VPS_PRIVATE_KEY")
 VPS_REMOTE_DIR = os.getenv("VPS_REMOTE_DIR", "/var/www/syslog-datasets")
