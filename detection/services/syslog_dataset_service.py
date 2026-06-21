@@ -8,6 +8,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from ..models import SyslogLog, SyslogDataset
+from ..utils.vps_storage import upload_file_to_vps
 
 
 DATE_FIELD_CANDIDATES = [
@@ -224,15 +225,24 @@ def export_syslog_dataset_to_csv(target_date=None, generated_by="manual"):
 
     stat = file_path.stat()
 
+    # Upload file CSV dari Railway ke VPS
+    file_url = upload_file_to_vps(str(file_path), filename)
+
     dataset, created = SyslogDataset.objects.update_or_create(
         dataset_date=target_date,
         defaults={
             "file_name": filename,
-            "file_path": str(file_path),
+
+            # file_path sekarang kita isi URL file di VPS
+            "file_path": file_url,
+
             "total_rows": total_rows,
             "size_bytes": stat.st_size,
             "size_mb": round(stat.st_size / (1024 * 1024), 2),
-            "storage_type": "local",
+
+            # ubah dari local menjadi vps
+            "storage_type": "vps",
+
             "generated_by": generated_by,
             "status": "success",
         }
@@ -242,7 +252,13 @@ def export_syslog_dataset_to_csv(target_date=None, generated_by="manual"):
         "id": dataset.id,
         "date": target_date.strftime("%Y-%m-%d"),
         "file_name": filename,
-        "file_path": str(file_path),
+
+        # URL file yang bisa dibuka/download
+        "file_url": file_url,
+
+        # tetap dikirim juga agar kode lama tidak langsung rusak
+        "file_path": file_url,
+
         "total_rows": total_rows,
         "size_bytes": stat.st_size,
         "size_mb": round(stat.st_size / (1024 * 1024), 2),
