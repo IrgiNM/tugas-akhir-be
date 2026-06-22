@@ -6,7 +6,7 @@ from .services.watchguard_get_syslog import fetch_logs_syslogs
 from .services.syslog_dataset_service import export_yesterday_syslog_dataset
 
 
-BASE_URL = "http://127.0.0.1:8000"
+BASE_URL = "https://tugas-akhir-be-production.up.railway.app"
 
 
 TOP_REPORT_URLS = [
