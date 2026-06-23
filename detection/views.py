@@ -622,7 +622,7 @@ def get_vps_private_key():
         paramiko.RSAKey,
         paramiko.Ed25519Key,
         paramiko.ECDSAKey,
-        paramiko.DSSKey,
+        # paramiko.DSSKey,
     ]
 
     last_error = None
