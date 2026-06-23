@@ -55,4 +55,11 @@ urlpatterns = [
 
     path("external/datasets/", ExternalDatasetListView.as_view(), name="external-datasets"),
 
+
+    path(
+        "syslog-dataset/data-vps/",
+        SyslogDatasetDataFromVPSAPIView.as_view(),
+        name="syslog-dataset-data-vps",
+    ),
+
 ]

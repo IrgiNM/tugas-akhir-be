@@ -12,7 +12,7 @@ from rest_framework import generics
 from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
 from .services.watchguard_auth import get_access_token
-
+from rest_framework.decorators import api_view
 
 from .models import *
 from .serializers import *
@@ -26,6 +26,9 @@ import subprocess
 import tempfile
 from pathlib import Path
 import csv
+import posixpath
+import re
+import paramiko
 
 from datetime import datetime, time, timedelta
 from django.utils.dateparse import parse_date
@@ -35,6 +38,9 @@ from .services.watchguard_logs import fetch_logs
 from .services.watchguard_get_syslog import fetch_logs_syslogs
 from .services.syslog_dataset_service import export_syslog_dataset_to_csv
 from .utils.vps_storage import upload_file_to_vps
+
+
+
 
 
 
@@ -600,6 +606,216 @@ class ExternalDatasetListView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+
+
+def get_vps_private_key():
+    private_key = settings.VPS_PRIVATE_KEY
+
+    if not private_key:
+        return None
+
+    private_key = private_key.replace("\\n", "\n")
+    key_file = io.StringIO(private_key)
+
+    key_loaders = [
+        paramiko.RSAKey,
+        paramiko.Ed25519Key,
+        paramiko.ECDSAKey,
+        paramiko.DSSKey,
+    ]
+
+    last_error = None
+
+    for key_loader in key_loaders:
+        try:
+            key_file.seek(0)
+            return key_loader.from_private_key(key_file)
+        except Exception as e:
+            last_error = e
+
+    raise Exception(f"Gagal membaca private key VPS: {last_error}")
+
+
+def get_vps_private_key():
+    private_key = settings.VPS_PRIVATE_KEY
+
+    if not private_key:
+        return None
+
+    private_key = private_key.replace("\\n", "\n")
+    key_file = io.StringIO(private_key)
+
+    key_loaders = [
+        paramiko.RSAKey,
+        paramiko.Ed25519Key,
+        paramiko.ECDSAKey,
+        paramiko.DSSKey,
+    ]
+
+    last_error = None
+
+    for key_loader in key_loaders:
+        try:
+            key_file.seek(0)
+            return key_loader.from_private_key(key_file)
+        except Exception as e:
+            last_error = e
+
+    raise Exception(f"Gagal membaca private key VPS: {last_error}")
+
+
+class SyslogDatasetDataFromVPSAPIView(APIView):
+    """
+    Mengambil isi CSV dari VPS menggunakan SFTP.
+    Bukan download file, tapi dikembalikan sebagai JSON.
+
+    Contoh:
+    /detection/syslog-dataset/data-vps/?date=2026-06-21
+    /detection/syslog-dataset/data-vps/?date=2026-06-21&page=1&page_size=50
+    """
+
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        date = request.GET.get("date")
+        page = request.GET.get("page", 1)
+        page_size = request.GET.get("page_size", 50)
+
+        if not date:
+            return Response(
+                {
+                    "status": False,
+                    "message": "Parameter date wajib diisi. Contoh: ?date=2026-06-21",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not re.match(r"^\d{4}-\d{2}-\d{2}$", date):
+            return Response(
+                {
+                    "status": False,
+                    "message": "Format date tidak valid. Gunakan format YYYY-MM-DD.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            page = int(page)
+            page_size = int(page_size)
+
+            if page < 1:
+                page = 1
+
+            if page_size < 1:
+                page_size = 50
+
+            if page_size > 500:
+                page_size = 500
+
+        except ValueError:
+            return Response(
+                {
+                    "status": False,
+                    "message": "Parameter page dan page_size harus berupa angka.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not settings.VPS_HOST or not settings.VPS_USER:
+            return Response(
+                {
+                    "status": False,
+                    "message": "Konfigurasi VPS_HOST atau VPS_USER belum diatur.",
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        file_name = f"syslog_dataset_{date}.csv"
+        remote_path = posixpath.join(settings.VPS_REMOTE_DIR, file_name)
+
+        ssh = None
+        sftp = None
+
+        try:
+            pkey = get_vps_private_key()
+
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+            ssh.connect(
+                hostname=settings.VPS_HOST,
+                port=settings.VPS_PORT,
+                username=settings.VPS_USER,
+                pkey=pkey,
+                timeout=15,
+            )
+
+            sftp = ssh.open_sftp()
+
+            try:
+                sftp.stat(remote_path)
+            except FileNotFoundError:
+                return Response(
+                    {
+                        "status": False,
+                        "message": "File CSV tidak ditemukan di VPS.",
+                        "file_name": file_name,
+                        "remote_path": remote_path,
+                    },
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            rows = []
+
+            with sftp.open(remote_path, mode="r") as remote_file:
+                csv_text = remote_file.read().decode("utf-8-sig")
+                csv_buffer = io.StringIO(csv_text)
+
+                reader = csv.DictReader(csv_buffer)
+
+                for row in reader:
+                    rows.append(row)
+
+            total_data = len(rows)
+            total_page = (total_data + page_size - 1) // page_size
+
+            start_index = (page - 1) * page_size
+            end_index = start_index + page_size
+
+            data = rows[start_index:end_index]
+
+            return Response(
+                {
+                    "status": True,
+                    "message": "Data CSV dari VPS berhasil diambil.",
+                    "file_name": file_name,
+                    "remote_path": remote_path,
+                    "total_data": total_data,
+                    "page": page,
+                    "page_size": page_size,
+                    "total_page": total_page,
+                    "data": data,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as e:
+            return Response(
+                {
+                    "status": False,
+                    "message": "Gagal mengambil data CSV dari VPS.",
+                    "error": str(e),
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        finally:
+            if sftp:
+                sftp.close()
+
+            if ssh:
+                ssh.close()
 
 
 # def extract_date_from_filename(filename):
