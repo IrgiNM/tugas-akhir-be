@@ -8,8 +8,6 @@ from .services.syslog_dataset_service import export_yesterday_syslog_dataset
 
 BASE_URL = "https://tugas-akhir-be-production.up.railway.app"
 
-scheduler_instance = None
-
 
 TOP_REPORT_URLS = [
     # SECURITY
@@ -42,70 +40,112 @@ def call_api(url):
     full_url = f"{BASE_URL}{url}"
 
     try:
-        print(f"RUNNING {full_url}", flush=True)
+        print(f"RUNNING {full_url}")
         response = requests.get(full_url, timeout=60)
-        print(f"STATUS {url}: {response.status_code}", flush=True)
+        print(f"STATUS: {response.status_code}")
     except Exception as e:
-        print(f"ERROR {url}: {str(e)}", flush=True)
+        print(f"ERROR: {str(e)}")
 
+# def start():
+#     scheduler = BackgroundScheduler(timezone="Asia/Jakarta")
 
-def safe_run(job_name, func):
-    try:
-        print(f"START {job_name}", flush=True)
-        result = func()
-        print(f"FINISH {job_name}: {result}", flush=True)
-    except Exception as e:
-        print(f"ERROR {job_name}: {str(e)}", flush=True)
+#     # ambil sekarang sekali
+#     scheduler.add_job(
+#         fetch_logs,
+#         "date",
+#         id="fetch_watchguard_logs_now",
+#         replace_existing=True,
+#     )
 
+#     scheduler.add_job(
+#         fetch_logs_syslogs,
+#         "date",
+#         id="fetch_syslog_logs_now",
+#         replace_existing=True,
+#     )
 
-def run_all_jobs():
-    print("========================================", flush=True)
-    print("SCHEDULER RUNNING", flush=True)
-    print("========================================", flush=True)
-
-    # 1. Fetch logs dari API luar
-    safe_run("fetch_watchguard_logs", fetch_logs)
-
-    # 2. Fetch logs dari Syslog UPATIK
-    safe_run("fetch_syslog_logs", fetch_logs_syslogs)
-
-    # 3. Export dataset CSV
-    safe_run("export_syslog_dataset_csv", export_yesterday_syslog_dataset)
-
-    # 4. Top Reports
-    print("START top_reports", flush=True)
-
-    for index, url in enumerate(TOP_REPORT_URLS, start=1):
-        print(f"TOP REPORT {index}/{len(TOP_REPORT_URLS)}", flush=True)
-        call_api(url)
-
-    print("FINISH top_reports", flush=True)
-
-    print("========================================", flush=True)
-    print("SCHEDULER FINISH", flush=True)
-    print("========================================", flush=True)
-
+#     scheduler.start()
+#     print("Scheduler started and fetch logs running now...")
 
 def start():
-    global scheduler_instance
-
-    if scheduler_instance and scheduler_instance.running:
-        print("Scheduler already running...", flush=True)
-        return
-
     scheduler = BackgroundScheduler(timezone="Asia/Jakarta")
 
+    # =========================
+    # FETCH LOGS DARI API LUAR
+    # jalan sehari sekali jam 00:10
+    # =========================
     scheduler.add_job(
-        run_all_jobs,
-        "interval",
-        minutes=5,
-        id="run_all_jobs_every_5_minutes",
+        fetch_logs,
+        "cron",
+        hour=0,
+        minute=10,
+        id="fetch_watchguard_logs",
         replace_existing=True,
-        max_instances=1,
-        coalesce=True,
+    )
+    
+    # =========================
+    # FETCH LOGS DARI SYSLOG UPATIK
+    # jalan sehari sekali jam 00:10
+    # =========================
+    scheduler.add_job(
+        fetch_logs_syslogs,
+        "cron",
+        hour=0,
+        minute=10,
+        id="fetch_syslog_logs",
+        replace_existing=True,
     )
 
-    scheduler.start()
-    scheduler_instance = scheduler
+    # =========================
+    # EXPORT DATASET SYSLOG CSV
+    # jalan sehari sekali jam 00:20
+    # setelah fetch syslog selesai
+    # =========================
+    scheduler.add_job(
+        export_yesterday_syslog_dataset,
+        "cron",
+        hour=0,
+        minute=20,
+        id="export_syslog_dataset_csv",
+        replace_existing=True,
+    )
 
-    print("Scheduler started, running every 5 minutes...", flush=True)
+    # =========================
+    # TOP REPORTS
+    # jalan sehari sekali jam 00:30
+    # =========================
+    for index, url in enumerate(TOP_REPORT_URLS):
+        scheduler.add_job(
+            call_api,
+            "cron",
+            hour=0,
+            minute=30 + index,
+            args=[url],
+            id=f"top_report_{index}",
+            replace_existing=True,
+        )
+
+    scheduler.start()
+    print("Scheduler started...")
+
+
+
+
+
+# from apscheduler.schedulers.background import BackgroundScheduler
+
+# from .services.watchguard_get_syslog import fetch_logs_syslogs
+
+
+# def start():
+#     scheduler = BackgroundScheduler(timezone="Asia/Jakarta")
+
+#     scheduler.add_job(
+#         fetch_logs_syslogs,
+#         "date",
+#         id="fetch_syslog_logs_now",
+#         replace_existing=True,
+#     )
+
+#     scheduler.start()
+#     print("Scheduler started and fetch syslog running now...")
