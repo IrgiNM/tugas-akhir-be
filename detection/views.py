@@ -375,18 +375,7 @@ class SyslogLogDetailView(APIView):
 
 class FetchSyslogLogView(APIView):
     def post(self, request):
-        date = request.query_params.get("date")
-        date_from = request.query_params.get("from")
-        date_to = request.query_params.get("to")
-
-        if date:
-            date_from = date
-            date_to = date
-
-        result = fetch_logs_syslogs(
-            date_from=date_from,
-            date_to=date_to,
-        )
+        result = fetch_logs_syslogs()
 
         if result.get("error", 0) > 0:
             return Response(

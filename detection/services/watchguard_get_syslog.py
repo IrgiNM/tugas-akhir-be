@@ -21,7 +21,7 @@ def normalize_api_response(response_json):
     return []
 
 
-def fetch_logs_syslogs(date_from=None, date_to=None):
+def fetch_logs_syslogs():
     print("Mengambil logs dari syslog UPATIK...")
 
     token = settings.WATCHGUARD_BEARER_TOKEN
@@ -36,10 +36,11 @@ def fetch_logs_syslogs(date_from=None, date_to=None):
             "message": "WATCHGUARD_BEARER_TOKEN belum diatur",
         }
 
-    yesterday = timezone.localdate() - timedelta(days=1)
+    # Ambil tanggal hari ini sesuai timezone Django
+    today = timezone.localdate().isoformat()
 
-    date_from = date_from or yesterday.isoformat()
-    date_to = date_to or yesterday.isoformat()
+    date_from = today
+    date_to = today
 
     headers = {
         "Authorization": f"Bearer {token}",

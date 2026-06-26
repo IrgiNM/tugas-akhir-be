@@ -18,6 +18,7 @@ DATE_FIELD_CANDIDATES = [
     "datetime",
 ]
 
+
 FIELD_MAP = {
     "timestamp": ["timestamp", "log_time", "created_at", "datetime"],
     "log_type": ["log_type", "type", "category"],
@@ -37,6 +38,7 @@ FIELD_MAP = {
     "severity": ["severity", "level"],
     "message": ["message", "raw_message", "raw_log", "log"],
 }
+
 
 CSV_HEADERS = [
     "timestamp",
@@ -76,6 +78,7 @@ BLOCK_ACTIONS = {
     "reset",
 }
 
+
 ALLOW_ACTIONS = {
     "allow",
     "allowed",
@@ -106,6 +109,9 @@ def get_available_date_field():
 def parse_target_date(target_date=None):
     if target_date is None:
         return timezone.localdate()
+
+    if isinstance(target_date, datetime):
+        return target_date.date()
 
     if isinstance(target_date, date):
         return target_date
@@ -225,54 +231,43 @@ def export_syslog_dataset_to_csv(target_date=None, generated_by="manual"):
 
     stat = file_path.stat()
 
-    # Upload file CSV dari Railway ke VPS
     file_url = upload_file_to_vps(str(file_path), filename)
 
     dataset, created = SyslogDataset.objects.update_or_create(
         dataset_date=target_date,
         defaults={
             "file_name": filename,
-
-            # file_path sekarang kita isi URL file di VPS
             "file_path": file_url,
-
             "total_rows": total_rows,
             "size_bytes": stat.st_size,
             "size_mb": round(stat.st_size / (1024 * 1024), 2),
-
-            # ubah dari local menjadi vps
             "storage_type": "vps",
-
             "generated_by": generated_by,
             "status": "success",
         }
     )
 
-    return {
+    result = {
         "id": dataset.id,
         "date": target_date.strftime("%Y-%m-%d"),
         "file_name": filename,
-
-        # URL file yang bisa dibuka/download
         "file_url": file_url,
-
-        # tetap dikirim juga agar kode lama tidak langsung rusak
         "file_path": file_url,
-
         "total_rows": total_rows,
         "size_bytes": stat.st_size,
         "size_mb": round(stat.st_size / (1024 * 1024), 2),
         "created": created,
+        "generated_by": generated_by,
     }
+
+    print("EXPORT SYSLOG DATASET RESULT:", result)
+
+    return result
 
 
 def export_today_syslog_dataset():
-    return export_syslog_dataset_to_csv(timezone.localdate())
-
-
-def export_yesterday_syslog_dataset():
-    yesterday = timezone.localdate() - timedelta(days=1)
+    today = timezone.localdate()
     return export_syslog_dataset_to_csv(
-        yesterday,
+        today,
         generated_by="scheduler"
     )
