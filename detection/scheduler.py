@@ -1,5 +1,9 @@
+from datetime import timedelta
+
 from apscheduler.schedulers.background import BackgroundScheduler
 import requests
+
+from django.utils import timezone
 
 from .services.watchguard_logs import fetch_logs
 from .services.watchguard_get_syslog import fetch_logs_syslogs
@@ -10,7 +14,6 @@ BASE_URL = "https://tugas-akhir-be-production.up.railway.app"
 
 
 TOP_REPORT_URLS = [
-    # SECURITY
     "/detection/top-blocked-countries/",
     "/detection/top-blocked-advanced-malware-apt/",
     "/detection/top-blocked-botnet-sites/",
@@ -23,7 +26,6 @@ TOP_REPORT_URLS = [
     "/detection/top-blocked-attacks/",
     "/detection/top-blocked-malware/",
 
-    # EXECUTIVE
     "/detection/top-countries/",
     "/detection/top-zero-day-malware-apt/",
     "/detection/top-clients/",
@@ -60,57 +62,83 @@ def start():
     scheduler = BackgroundScheduler(timezone="Asia/Jakarta")
 
     # =========================
-    # FETCH LOGS WATCHGUARD
-    # jalan setiap hari jam 23:15
+    # LANGSUNG FETCH SAAT SERVER START
+    # supaya aplikasi tidak kosong setelah deploy/restart
     # =========================
     scheduler.add_job(
-        fetch_logs,
-        "cron",
-        hour=23,
-        minute=15,
-        id="fetch_watchguard_logs",
+        fetch_logs_syslogs,
+        "date",
+        run_date=timezone.now() + timedelta(seconds=10),
+        id="fetch_syslog_logs_now",
+        replace_existing=True,
+    )
+
+    scheduler.add_job(
+        export_today_syslog_dataset,
+        "date",
+        run_date=timezone.now() + timedelta(minutes=2),
+        id="export_syslog_dataset_now",
         replace_existing=True,
     )
 
     # =========================
-    # FETCH LOGS SYSLOG UPATIK
-    # jalan setiap hari jam 23:25
-    # mengambil data HARI INI
+    # FETCH SYSLOG HARI INI SETIAP 3 JAM
+    # jam 00:05, 03:05, 06:05, dst
+    # =========================
+    scheduler.add_job(
+        fetch_logs_syslogs,
+        "cron",
+        hour="0,3,6,9,12,15,18,21",
+        minute=5,
+        id="fetch_syslog_logs_every_3_hours",
+        replace_existing=True,
+    )
+
+    # =========================
+    # EXPORT CSV HARI INI SETIAP 3 JAM
+    # setelah fetch selesai
+    # =========================
+    scheduler.add_job(
+        export_today_syslog_dataset,
+        "cron",
+        hour="0,3,6,9,12,15,18,21",
+        minute=15,
+        id="export_syslog_dataset_every_3_hours",
+        replace_existing=True,
+    )
+
+    # =========================
+    # TOP REPORTS SETIAP 3 JAM
+    # setelah fetch dan export
+    # =========================
+    scheduler.add_job(
+        call_all_top_reports,
+        "cron",
+        hour="0,3,6,9,12,15,18,21",
+        minute=25,
+        id="top_reports_every_3_hours",
+        replace_existing=True,
+    )
+
+    # =========================
+    # FETCH FINAL SEBELUM GANTI HARI
+    # supaya data hari ini paling lengkap
     # =========================
     scheduler.add_job(
         fetch_logs_syslogs,
         "cron",
         hour=23,
-        minute=25,
-        id="fetch_syslog_logs",
+        minute=45,
+        id="fetch_syslog_logs_final_today",
         replace_existing=True,
     )
 
-    # =========================
-    # EXPORT DATASET SYSLOG CSV
-    # jalan setiap hari jam 23:45
-    # export data HARI INI
-    # =========================
     scheduler.add_job(
         export_today_syslog_dataset,
         "cron",
         hour=23,
-        minute=45,
-        id="export_syslog_dataset_csv",
-        replace_existing=True,
-    )
-
-    # =========================
-    # TOP REPORTS
-    # jalan setiap hari jam 23:50
-    # setelah fetch dan export selesai
-    # =========================
-    scheduler.add_job(
-        call_all_top_reports,
-        "cron",
-        hour=23,
-        minute=50,
-        id="top_reports_all",
+        minute=55,
+        id="export_syslog_dataset_final_today",
         replace_existing=True,
     )
 
