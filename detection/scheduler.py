@@ -88,7 +88,7 @@ def start():
     scheduler.add_job(
         fetch_logs_syslogs,
         "cron",
-        hour="0,3,6,9,12,15,18,21",
+        hour="0,6,12,18",
         minute=5,
         id="fetch_syslog_logs_every_3_hours",
         replace_existing=True,
@@ -101,7 +101,7 @@ def start():
     scheduler.add_job(
         export_today_syslog_dataset,
         "cron",
-        hour="0,3,6,9,12,15,18,21",
+        hour="0,6,12,18",
         minute=15,
         id="export_syslog_dataset_every_3_hours",
         replace_existing=True,
@@ -114,7 +114,7 @@ def start():
     scheduler.add_job(
         call_all_top_reports,
         "cron",
-        hour="0,3,6,9,12,15,18,21",
+        hour="0,6,12,18",
         minute=25,
         id="top_reports_every_3_hours",
         replace_existing=True,
