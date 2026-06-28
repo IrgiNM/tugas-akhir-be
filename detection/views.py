@@ -13,6 +13,9 @@ from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
 from .services.watchguard_auth import get_access_token
 from rest_framework.decorators import api_view
+from rest_framework.permissions import IsAdminUser
+from django.db import transaction
+
 
 from .models import *
 from .serializers import *
@@ -394,6 +397,31 @@ class FetchSyslogLogView(APIView):
             status=status.HTTP_200_OK
         )
 
+class DeleteAllSyslogLogView(APIView):
+    permission_classes = [IsAdminUser]  # hanya admin yang bisa hapus
+
+    def delete(self, request):
+        try:
+            with transaction.atomic():
+                total_deleted = SyslogLog.objects.count()
+                SyslogLog.objects.all().delete()
+
+            return Response(
+                {
+                    "message": "Semua data SyslogLog berhasil dihapus",
+                    "total_deleted": total_deleted
+                },
+                status=status.HTTP_200_OK
+            )
+
+        except Exception as e:
+            return Response(
+                {
+                    "message": "Gagal menghapus data SyslogLog",
+                    "error": str(e)
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 # DATASET
 

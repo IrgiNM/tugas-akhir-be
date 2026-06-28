@@ -50,6 +50,11 @@ urlpatterns = [
         DownloadSyslogDatasetView.as_view(),
         name="download-syslog-dataset",
     ),
+    path(
+        "syslog-logs/delete-all/",
+        DeleteAllSyslogLogView.as_view(),
+        name="delete-all-syslog-logs"
+    ),
 
     path("test-vps-upload/", TestVpsUploadView.as_view(), name="test-vps-upload"),
 
