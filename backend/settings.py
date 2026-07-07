@@ -133,10 +133,20 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 #         'PORT': '5432',
 #     }
 # }
+
+# DATABASES = {
+#     "default": dj_database_url.config(
+#         default=os.environ.get("DATABASE_URL")
+#     )
+# }
+
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+if not DATABASE_URL:
+    raise Exception("DATABASE_URL belum terbaca. Cek .htaccess atau environment variable.")
+
 DATABASES = {
-    "default": dj_database_url.config(
-        default=os.environ.get("DATABASE_URL")
-    )
+    "default": dj_database_url.parse(DATABASE_URL)
 }
 
 # Password validation
