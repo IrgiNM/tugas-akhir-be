@@ -58,6 +58,10 @@ ALLOWED_HOSTS = [
 #     "127.0.0.1",
 # ]
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://monitoringupatikpolindra.com",
+    "https://www.monitoringupatikpolindra.com",
+]
 
 # Application definition
 
