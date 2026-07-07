@@ -46,11 +46,17 @@ DEBUG = os.environ.get("DEBUG", "False") == "True"
 
 # ALLOWED_HOSTS = ["*"]
 ALLOWED_HOSTS = [
-    ".railway.app",
-    ".up.railway.app",
+    "monitoringupatikpolindra.com",
+    "www.monitoringupatikpolindra.com",
     "localhost",
     "127.0.0.1",
 ]
+# ALLOWED_HOSTS = [
+#     ".railway.app",
+#     ".up.railway.app",
+#     "localhost",
+#     "127.0.0.1",
+# ]
 
 
 # Application definition
