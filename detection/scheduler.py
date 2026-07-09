@@ -10,7 +10,8 @@ from .services.watchguard_get_syslog import fetch_logs_syslogs
 from .services.syslog_dataset_service import export_today_syslog_dataset
 
 
-BASE_URL = "https://tugas-akhir-be-production.up.railway.app"
+# BASE_URL = "https://tugas-akhir-be-production.up.railway.app"
+BASE_URL = "https://monitoringupatikpolindra.com"
 
 
 TOP_REPORT_URLS = [
@@ -45,6 +46,7 @@ def call_api(url):
         print(f"RUNNING {full_url}")
         response = requests.get(full_url, timeout=60)
         print(f"STATUS: {response.status_code}")
+        print(f"RESPONSE: {response.text[:500]}")
     except Exception as e:
         print(f"ERROR: {str(e)}")
 
