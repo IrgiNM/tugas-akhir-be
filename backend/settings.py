@@ -123,22 +123,22 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'ta_project_irgi',
-        'USER': 'postgres',
-        'PASSWORD': '112N4ZMU$',
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
-}
-
 # DATABASES = {
-#     "default": dj_database_url.config(
-#         default=os.environ.get("DATABASE_URL")
-#     )
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'ta_project_irgi',
+#         'USER': 'postgres',
+#         'PASSWORD': '112N4ZMU$',
+#         'HOST': 'localhost',
+#         'PORT': '5432',
+#     }
 # }
+
+DATABASES = {
+    "default": dj_database_url.config(
+        default=os.environ.get("DATABASE_URL")
+    )
+}
 
 
 
