@@ -378,24 +378,34 @@ class SyslogLogDetailView(APIView):
 
 class FetchSyslogLogView(APIView):
     def post(self, request):
-        result = fetch_logs_syslogs()
+        try:
+            result = fetch_logs_syslogs()
 
-        if result.get("error", 0) > 0:
+            if result.get("error", 0) > 0:
+                return Response(
+                    {
+                        "message": "Fetch log gagal",
+                        "result": result,
+                    },
+                    status=status.HTTP_503_SERVICE_UNAVAILABLE
+                )
+
             return Response(
                 {
-                    "message": "Fetch log gagal",
+                    "message": "Fetch log selesai",
                     "result": result,
                 },
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_200_OK
             )
 
-        return Response(
-            {
-                "message": "Fetch log selesai",
-                "result": result,
-            },
-            status=status.HTTP_200_OK
-        )
+        except Exception as e:
+            return Response(
+                {
+                    "message": "Terjadi error pada server Django",
+                    "error": str(e),
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class DeleteAllSyslogLogView(APIView):
     permission_classes = [IsAdminUser]  # hanya admin yang bisa hapus
