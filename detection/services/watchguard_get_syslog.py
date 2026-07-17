@@ -44,6 +44,7 @@ def fetch_logs_syslogs():
 
     headers = {
         "Authorization": f"Bearer {token}",
+        "x-api-key": "penelitianPakRenol",
         "Accept": "application/json",
         "User-Agent": "Django-Backend-Syslog-Fetcher/1.0",
     }

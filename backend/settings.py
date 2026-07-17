@@ -125,16 +125,16 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'ta_project_irgi',
-#         'USER': 'postgres',
-#         'PASSWORD': '112N4ZMU$',
-#         'HOST': 'localhost',
-#         'PORT': '5432',
-#     }
-# }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'ta_project_irgi',
+        'USER': 'postgres',
+        'PASSWORD': '112N4ZMU$',
+        'HOST': 'localhost',
+        'PORT': '5432',
+    }
+}
 
 # DATABASES = {
 #     "default": dj_database_url.config(
@@ -145,14 +145,14 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 
 # INI UNTUK DI HOSTING
-DATABASE_URL = os.environ.get("DATABASE_URL")
+# DATABASE_URL = os.environ.get("DATABASE_URL")
 
-if not DATABASE_URL:
-    raise Exception("DATABASE_URL belum terbaca. Cek .htaccess atau environment variable.")
+# if not DATABASE_URL:
+#     raise Exception("DATABASE_URL belum terbaca. Cek .htaccess atau environment variable.")
 
-DATABASES = {
-    "default": dj_database_url.parse(DATABASE_URL)
-}
+# DATABASES = {
+#     "default": dj_database_url.parse(DATABASE_URL)
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
