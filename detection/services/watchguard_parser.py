@@ -140,12 +140,15 @@ def parse_zones(line):
     return result
 
 
-def parse_watchguard_log(line):
+def parse_watchguard_log(line, fallback_timestamp=None):
+    # Gunakan waktu fetch sebagai timestamp cadangan
+    fallback_timestamp = fallback_timestamp or timezone.now()
+
     data = {
-        "timestamp": None,
+        "timestamp": fallback_timestamp,
         "device_name": None,
         "device_id": None,
-        "device_time": None,
+        "device_time": fallback_timestamp,
 
         "log_type": "unknown",
         "process_id": None,
@@ -176,8 +179,6 @@ def parse_watchguard_log(line):
         "raw_log": line,
     }
 
-    # Contoh header:
-    # 2026-06-18T07:53:17+07:00 WatchGuard-XTM D043027CCA4FF (2026-06-18T00:53:17) firewall:
     header_match = re.match(
         r'^(\S+)\s+(\S+)\s+(\S+)\s+\(([^)]+)\)\s+(.+)$',
         line
@@ -187,10 +188,16 @@ def parse_watchguard_log(line):
         timestamp = parse_datetime(header_match.group(1))
         device_time = parse_datetime(header_match.group(4))
 
-        data["timestamp"] = make_aware_if_naive(timestamp)
+        # Kalau parsing berhasil, gunakan timestamp asli.
+        # Kalau gagal, tetap gunakan waktu fetch.
+        if timestamp:
+            data["timestamp"] = make_aware_if_naive(timestamp)
+
+        if device_time:
+            data["device_time"] = make_aware_if_naive(device_time)
+
         data["device_name"] = header_match.group(2)
         data["device_id"] = header_match.group(3)
-        data["device_time"] = make_aware_if_naive(device_time)
 
     log_type, process_id = detect_log_type_and_pid(line)
     data["log_type"] = log_type
