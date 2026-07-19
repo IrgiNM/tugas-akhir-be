@@ -27,6 +27,12 @@ urlpatterns = [
     path('top-application-categories/', TopApplicationCategoriesView.as_view()),
     path('top-protocols/', TopProtocolsView.as_view()),
 
+    path(
+        "top-reports/run/",
+        RunTopReportsView.as_view(),
+        name="run-top-reports"
+    ),
+
     path("geo/", GeoLocationView.as_view()),
 
     path("backup/", BackupDatabaseView.as_view()),

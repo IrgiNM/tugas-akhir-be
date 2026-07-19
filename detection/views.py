@@ -15,6 +15,8 @@ from .services.watchguard_auth import get_access_token
 from rest_framework.decorators import api_view
 from rest_framework.permissions import IsAdminUser
 from django.db import transaction
+from threading import Thread, Lock
+from detection.scheduler import call_all_top_reports
 
 
 from .models import *
@@ -228,6 +230,62 @@ class TopReportListView(generics.ListAPIView):
         # jika tidak ada parameter -> ambil semua data
         return queryset
     
+# Mencegah proses dijalankan berkali-kali secara bersamaan
+top_reports_lock = Lock()
+
+
+def run_top_reports_background():
+    try:
+        call_all_top_reports()
+    except Exception as error:
+        print(f"ERROR MANUAL TOP REPORTS: {error}")
+    finally:
+        # Lock harus selalu dilepas setelah proses selesai
+        if top_reports_lock.locked():
+            top_reports_lock.release()
+
+
+class RunTopReportsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        # Jika proses sebelumnya masih berjalan
+        if not top_reports_lock.acquire(blocking=False):
+            return Response(
+                {
+                    "success": False,
+                    "message": "Proses generate Top Reports masih berjalan."
+                },
+                status=status.HTTP_409_CONFLICT
+            )
+
+        try:
+            thread = Thread(
+                target=run_top_reports_background,
+                daemon=True
+            )
+            thread.start()
+
+            return Response(
+                {
+                    "success": True,
+                    "message": "Proses generate seluruh Top Reports telah dimulai."
+                },
+                status=status.HTTP_202_ACCEPTED
+            )
+
+        except Exception as error:
+            if top_reports_lock.locked():
+                top_reports_lock.release()
+
+            return Response(
+                {
+                    "success": False,
+                    "message": "Gagal menjalankan proses Top Reports.",
+                    "error": str(error)
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 # GEOLOCATION
 
