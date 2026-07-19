@@ -17,6 +17,7 @@ from rest_framework.permissions import IsAdminUser
 from django.db import transaction
 from threading import Thread, Lock
 from detection.scheduler import call_all_top_reports
+from rest_framework.exceptions import ValidationError
 
 
 from .models import *
@@ -204,30 +205,147 @@ class TopProtocolsView(BaseTopReportView):
     view_name_value = 'top_protocols'
     type_report = 'executive'
 
+# class TopReportListView(generics.ListAPIView):
+#     serializer_class = TopReportSerializer
+#     def get_queryset(self):
+#         queryset = TopReport.objects.all()
+#         # ambil query parameter
+#         date = self.request.query_params.get('date')
+#         month = self.request.query_params.get('month')
+#         year = self.request.query_params.get('year')
+#         # jika ada date -> filter berdasarkan tanggal lengkap
+#         if date:
+#             queryset = queryset.filter(
+#                 fetched_at__date=date
+#             )
+#         # jika ada month -> filter berdasarkan bulan
+#         elif month:
+#             queryset = queryset.filter(
+#                 fetched_at__month=month
+#             )
+#         # jika ada year -> filter berdasarkan tahun
+#         elif year:
+#             queryset = queryset.filter(
+#                 fetched_at__year=year
+#             )
+#         # jika tidak ada parameter -> ambil semua data
+#         return queryset
+
 class TopReportListView(generics.ListAPIView):
     serializer_class = TopReportSerializer
+
     def get_queryset(self):
-        queryset = TopReport.objects.all()
-        # ambil query parameter
-        date = self.request.query_params.get('date')
-        month = self.request.query_params.get('month')
-        year = self.request.query_params.get('year')
-        # jika ada date -> filter berdasarkan tanggal lengkap
-        if date:
-            queryset = queryset.filter(
-                fetched_at__date=date
+        queryset = TopReport.objects.all().order_by("-fetched_at")
+
+        date_param = self.request.query_params.get("date")
+        month_param = self.request.query_params.get("month")
+        year_param = self.request.query_params.get("year")
+
+        # Filter berdasarkan tanggal lengkap
+        if date_param:
+            selected_date = parse_date(date_param)
+
+            if selected_date is None:
+                raise ValidationError({
+                    "date": "Format tanggal harus YYYY-MM-DD."
+                })
+
+            start_datetime = datetime.combine(
+                selected_date,
+                time.min
             )
-        # jika ada month -> filter berdasarkan bulan
-        elif month:
+
+            end_datetime = start_datetime + timedelta(days=1)
+
+            # Jika project menggunakan timezone
+            if settings.USE_TZ:
+                current_timezone = timezone.get_current_timezone()
+
+                start_datetime = timezone.make_aware(
+                    start_datetime,
+                    current_timezone
+                )
+
+                end_datetime = timezone.make_aware(
+                    end_datetime,
+                    current_timezone
+                )
+
             queryset = queryset.filter(
-                fetched_at__month=month
+                fetched_at__gte=start_datetime,
+                fetched_at__lt=end_datetime
             )
-        # jika ada year -> filter berdasarkan tahun
-        elif year:
+
+        # Filter berdasarkan bulan dan tahun
+        elif month_param and year_param:
+            try:
+                month = int(month_param)
+                year = int(year_param)
+
+                if month < 1 or month > 12:
+                    raise ValueError
+
+            except ValueError:
+                raise ValidationError({
+                    "month": "Bulan harus antara 1 sampai 12.",
+                    "year": "Tahun harus berupa angka."
+                })
+
+            start_datetime = datetime(year, month, 1)
+
+            if month == 12:
+                end_datetime = datetime(year + 1, 1, 1)
+            else:
+                end_datetime = datetime(year, month + 1, 1)
+
+            if settings.USE_TZ:
+                current_timezone = timezone.get_current_timezone()
+
+                start_datetime = timezone.make_aware(
+                    start_datetime,
+                    current_timezone
+                )
+
+                end_datetime = timezone.make_aware(
+                    end_datetime,
+                    current_timezone
+                )
+
             queryset = queryset.filter(
-                fetched_at__year=year
+                fetched_at__gte=start_datetime,
+                fetched_at__lt=end_datetime
             )
-        # jika tidak ada parameter -> ambil semua data
+
+        # Filter berdasarkan tahun
+        elif year_param:
+            try:
+                year = int(year_param)
+            except ValueError:
+                raise ValidationError({
+                    "year": "Tahun harus berupa angka."
+                })
+
+            start_datetime = datetime(year, 1, 1)
+            end_datetime = datetime(year + 1, 1, 1)
+
+            if settings.USE_TZ:
+                current_timezone = timezone.get_current_timezone()
+
+                start_datetime = timezone.make_aware(
+                    start_datetime,
+                    current_timezone
+                )
+
+                end_datetime = timezone.make_aware(
+                    end_datetime,
+                    current_timezone
+                )
+
+            queryset = queryset.filter(
+                fetched_at__gte=start_datetime,
+                fetched_at__lt=end_datetime
+            )
+
         return queryset
     
 # Mencegah proses dijalankan berkali-kali secara bersamaan
