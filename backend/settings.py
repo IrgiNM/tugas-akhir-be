@@ -161,20 +161,20 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 #     }
 # }
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": "monito44_ta_be",
-        "USER": "monito44_tauser",
-        "PASSWORD": "112N4ZMuS70F4",
-        "HOST": "localhost",
-        "PORT": "3306",
-        "OPTIONS": {
-            "charset": "utf8mb4",
-            "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
-        },
-    }
-}
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.mysql",
+#         "NAME": "monito44_ta_be",
+#         "USER": "monito44_tauser",
+#         "PASSWORD": "112N4ZMuS70F4",
+#         "HOST": "localhost",
+#         "PORT": "3306",
+#         "OPTIONS": {
+#             "charset": "utf8mb4",
+#             "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
+#         },
+#     }
+# }
 
 # DATABASES = {
 #     "default": dj_database_url.config(
@@ -185,14 +185,14 @@ DATABASES = {
 
 
 # INI UNTUK DI HOSTING
-# DATABASE_URL = os.environ.get("DATABASE_URL")
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
-# if not DATABASE_URL:
-#     raise Exception("DATABASE_URL belum terbaca. Cek .htaccess atau environment variable.")
+if not DATABASE_URL:
+    raise Exception("DATABASE_URL belum terbaca. Cek .htaccess atau environment variable.")
 
-# DATABASES = {
-#     "default": dj_database_url.parse(DATABASE_URL)
-# }
+DATABASES = {
+    "default": dj_database_url.parse(DATABASE_URL)
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
