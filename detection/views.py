@@ -346,7 +346,11 @@ class TopReportListView(generics.ListAPIView):
                 fetched_at__lt=end_datetime
             )
 
-        return queryset
+        return queryset.order_by(
+            "-connections",
+            "-bytes",
+            "name"
+        )
     
 # Mencegah proses dijalankan berkali-kali secara bersamaan
 top_reports_lock = Lock()
