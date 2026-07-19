@@ -53,6 +53,7 @@ def fetch_logs_syslogs():
         "from": date_from,
         "to": date_to,
         "limit": 5000,
+        "order": "desc",
     }
 
     try:
