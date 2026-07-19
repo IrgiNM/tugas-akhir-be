@@ -20,18 +20,41 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SYSLOG_DATASET_DIR = BASE_DIR / "datasets" / "syslog"
 
 load_dotenv(BASE_DIR / ".env")
-WATCHGUARD_BEARER_TOKEN = os.getenv("WATCHGUARD_BEARER_TOKEN")
+# WATCHGUARD_BEARER_TOKEN = os.getenv("WATCHGUARD_BEARER_TOKEN")
 
-VPS_HOST = os.getenv("VPS_HOST")
-VPS_PORT = int(os.getenv("VPS_PORT") or 22)
-VPS_USER = os.getenv("VPS_USER")
-VPS_PRIVATE_KEY = os.getenv("VPS_PRIVATE_KEY")
-VPS_REMOTE_DIR = os.getenv("VPS_REMOTE_DIR", "/var/www/syslog-datasets")
-VPS_BASE_URL = os.getenv("VPS_BASE_URL")
+# VPS_HOST = os.getenv("VPS_HOST")
+# VPS_PORT = int(os.getenv("VPS_PORT") or 22)
+# VPS_USER = os.getenv("VPS_USER")
+# VPS_PRIVATE_KEY = os.getenv("VPS_PRIVATE_KEY")
+# VPS_REMOTE_DIR = os.getenv("VPS_REMOTE_DIR", "/var/www/syslog-datasets")
+# VPS_BASE_URL = os.getenv("VPS_BASE_URL")
 
-DATASET_API_KEY = os.getenv("DATASET_API_KEY")
+# DATASET_API_KEY = os.getenv("DATASET_API_KEY")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+
+
+
+# ============================================================
+# KONFIGURASI LANGSUNG
+# ============================================================
+
+WATCHGUARD_BEARER_TOKEN = "D2152BD48882DD969E701E4E2E6045C9"
+DATASET_API_KEY = "D474537-17Y4-11261"
+RUN_SCHEDULER = True
+
+# ============================================================
+# KONFIGURASI VPS
+# ============================================================
+
+VPS_BASE_URL = "http://103.245.38.142/datasets"
+VPS_HOST = "103.245.38.142"
+VPS_PORT = 2222
+VPS_USER = "csvuser"
+VPS_REMOTE_DIR = "/var/www/syslog-datasets"
+VPS_PRIVATE_KEY = "-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZWQyNTUxOQAAACDyKZYxIZl+4ls465y0fx7Ia5FIYyvxH+Ph3nZfjnqp+gAAAJht7wOTbe8DkwAAAAtzc2gtZWQyNTUxOQAAACDyKZYxIZl+4ls465y0fx7Ia5FIYyvxH+Ph3nZfjnqp+gAAAEAtC+b/aXNu1+Lczn27DE8JqnNrx3dtP+1DCFi+QjM1q/IpljEhmX7iWzjrnLR/HshrkUhjK/Ef4+Hedl+Oeqn6AAAAEnJhaWx3YXktZGphbmdvLWNzdgECAw==\n-----END OPENSSH PRIVATE KEY-----"
 
 
 
